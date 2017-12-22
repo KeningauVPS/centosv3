@@ -254,11 +254,6 @@ rm -f /root/webmin-current.deb
 service webmin restart
 service vnstat restart
 
-# install pptp vpn
-wget https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/pptp.sh
-chmod +x pptp.sh
-./pptp.sh
-
 # download script
 cd
 wget -O /usr/bin/benchmark "https://raw.githubusercontent.com/Mbah-Shondong/Debian732/master/Debian7/benchmark.sh"
